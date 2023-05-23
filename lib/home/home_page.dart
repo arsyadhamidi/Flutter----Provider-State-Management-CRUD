@@ -33,7 +33,7 @@ class _HomePageState extends State<HomePage> {
                       : homeProvider.listMahasiswa!.isEmpty
                           ? Center(child: Text("No Data"))
                           : ListView.builder(
-                              itemCount: homeProvider.listMahasiswa?.length,
+                              itemCount: homeProvider.listMahasiswa?.length ?? 0,
                               itemBuilder: (context, index) {
                                 return Card(
                                   shape: OutlineInputBorder(
@@ -54,7 +54,7 @@ class _HomePageState extends State<HomePage> {
                                          });
                                       },
                                       title: Text(
-                                        homeProvider.listMahasiswa?[index].nama ??
+                                        homeProvider.listMahasiswa?[index].namaMahasiswa ??
                                             '',
                                         style: TextStyle(
                                             fontSize: 20,
@@ -65,20 +65,14 @@ class _HomePageState extends State<HomePage> {
                                         CrossAxisAlignment.start,
                                         children: [
                                           Text(homeProvider
-                                              .listMahasiswa?[index].nohp ??
+                                              .listMahasiswa?[index].nohpMahasiswa ??
                                               ''),
                                           Text(homeProvider
-                                              .listMahasiswa?[index].alamat ??
+                                              .listMahasiswa?[index].alamatMahasiswa ??
                                               ''),
                                           Text(homeProvider.listMahasiswa?[index]
                                               .pendidikan ??
                                               ''),
-                                          Text(homeProvider.listMahasiswa?[index]
-                                              .namaPekerjaan ??
-                                              ''),
-                                          Text("${homeProvider
-                                              .listMahasiswa?[index].lama ??
-                                              ''} Tahun")
                                         ],
                                       ),
                                       trailing: IconButton(

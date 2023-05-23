@@ -2,8 +2,9 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter5/api/api_config.dart';
-import 'package:flutter5/model/modelpekerjaan.dart';
-import 'package:flutter5/network/network.dart';
+import 'package:flutter5/model/list_model_pekerjaan.dart';
+import 'package:flutter5/model/model_pekerjaan.dart';
+import 'package:flutter5/network/network_provider.dart';
 import 'package:http/http.dart' as http;
 
 class FormProvider extends ChangeNotifier{
@@ -23,25 +24,26 @@ class FormProvider extends ChangeNotifier{
     'Tidak Sekolah',
   ];
 
-  FormProvider(String nama, String nohp, String alamat, String pendidikan){
-    init(nama, nohp, alamat, pendidikan);
+  // Pekerjaan
+  int counter = 1;
+  bool minus = false;
+  List<Map<String, String>> listPekerjaan = [];
+  var idmahasiswa;
+
+  FormProvider(String idMahasiswa, String nama, String nohp, String alamat, String pendidikan){
+    init(idMahasiswa, nama, nohp, alamat, pendidikan);
   }
 
-  init(String nama, String nohp, String alamat, String pendidikan){
-    if(nama != null || nohp != null || alamat != null || pendidikan != null){
-      isNamaCont.text = nama;
-      isNoHpCont.text = nohp;
-      isAlamatCont.text = alamat;
-      selectedValue = pendidikan;
-    }
+  init(String idMahasiswa, String nama, String nohp, String alamat, String pendidikan){
+    idmahasiswa = idMahasiswa;
+    isNamaCont.text = nama;
+    isNoHpCont.text = nohp;
+    isAlamatCont.text = alamat;
+    selectedValue = pendidikan;
 
 
     listDataPekerjaan();
   }
-
-  // Pekerjaan
-  int counter = 1;
-  bool minus = false;
 
   void addIncrements(){
     counter++;
@@ -60,121 +62,66 @@ class FormProvider extends ChangeNotifier{
   }
 
   Future<void> addDataPekerjaan(BuildContext context) async{
-    final response = await http.post(Uri.parse(ApiConfig.url + "addpekerjaan.php"), body: {
-      'nama_pekerjaan': isNamaPerkejaanCont.text,
-      'lama': counter.toString(),
+    listPekerjaan.add(
+        {
+          'nama_pekerjaan': isNamaPerkejaanCont.text,
+          'lama' : counter.toString(),
+        }
+    );
+    notifyListeners();
+  }
+
+  Future<void> listDataPekerjaan() async {
+    try{
+      final response = await NetworkProvider().getDataPekerjaan(idmahasiswa.toString());
+      listPekerjaan = (response.data ?? []).map((e) => {
+        'nama_pekerjaan': e.namaPekerjaan ?? '',
+        'lama' : e.lama?.toString() ?? '',
+      }).toList() ;
+      notifyListeners();
+    }catch(e){
+      print(e);
+    }
+  }
+
+  Future<void> addMahasiswa(BuildContext context) async{
+    final response = await http.post(Uri.parse(ApiConfig.url + "add-mahasiswa"), body: {
+      'nama_mahasiswa': isNamaCont.text,
+      'nohp_mahasiswa': isNoHpCont.text,
+      'alamat_mahasiswa': isAlamatCont.text,
+      'pendidikan': selectedData,
+      'pekerjaan': jsonEncode(listPekerjaan),
     });
 
-    var addpekerjaan = jsonDecode(response.body);
+    var addmahasiswa = await jsonDecode(response.body);
 
-    if(addpekerjaan != null){
-      listDataPekerjaan();
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          backgroundColor: Colors.green,
-          content: Text("Add Data Pekerjaan Successfully!", style: TextStyle(color: Colors.white),)));
-      notifyListeners();
+    if(addmahasiswa["status"] == 200){
+      Navigator.pop(context);
     }else{
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          backgroundColor: Colors.red,
-          content: Text("Add Data Pekerjaan Failed!", style: TextStyle(color: Colors.white),)));
-      notifyListeners();
-    }
-
-    notifyListeners();
-
-  }
-
-  List<ModelPekerjaan>? listPekerjaan;
-
-  Future<List<ModelPekerjaan>?> listDataPekerjaan() async {
-    try{
-      final response = await NetworkProvider().getDataPekerjaan();
-      listPekerjaan = response;
-      notifyListeners();
-    }catch(e){
-      print(e);
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Add Failed")));
     }
   }
 
+  Future<void> updateMahasiswa(BuildContext context) async{
+    final response = await http.post(Uri.parse(ApiConfig.url + "update-pekerjaan"), body: {
+      'id_mahasiswa': idmahasiswa,
+      'nama_mahasiswa': isNamaCont.text,
+      'nohp_mahasiswa': isNoHpCont.text,
+      'alamat_mahasiswa': isAlamatCont.text,
+      'pendidikan': selectedValue,
+      'pekerjaan': jsonEncode(listPekerjaan),
+    });
 
-  Future<List<ModelPekerjaan>?> deleteDataPekerjaan(BuildContext context, String id_pekerjaan) async{
-    try{
-      final response = await http.post(Uri.parse(ApiConfig.url + "deletepekerjaan.php"), body: {
-        'id_pekerjaan': id_pekerjaan,
-      });
-      List<ModelPekerjaan> deletepekerjaan = modelPekerjaanFromJson(response.body);
-      if(deletepekerjaan != null){
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            backgroundColor: Colors.green,
-            content: Text("Delete Data Pekerjaan Successfully!", style: TextStyle(color: Colors.white),)));
-        return deletepekerjaan;
-      }else{
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            backgroundColor: Colors.red,
-            content: Text("Delete Data Pekerjaan Failed!", style: TextStyle(color: Colors.white),)));
-      }
-    }catch(e){
-      print(e);
+    var updatemahasiswa = jsonDecode(response.body);
+
+    if(updatemahasiswa["status"] == 200){
+      Navigator.pop(context);
+    }else{
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Update Failed")));
     }
+
   }
 
 
-  Future<void> addDataMahasiswa(BuildContext context) async{
-    try{
-      final response = await http.post(Uri.parse(ApiConfig.url + "addmahasiswa.php"), body: {
-        'nama': isNamaCont.text,
-        'nohp': isNoHpCont.text,
-        'alamat': isAlamatCont.text,
-        'pendidikan': selectedData,
-      });
-      var addMahasiswa = await json.decode(json.encode(response.body));
-      print(response.body);
-      if(addMahasiswa != Null){
-        Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            backgroundColor: Colors.green,
-            content: Text("Add Mahasiswa Successfully!", style: TextStyle(color: Colors.white),)));
-      }else{
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            backgroundColor: Colors.red,
-            content: Text("Add Mahasiswa Failed!", style: TextStyle(color: Colors.white),)));
-      }
-      notifyListeners();
-    }catch(e){
-      print(e);
-    }
-  }
-
-
-  Future<void> updateDataMahasiswa(BuildContext context, String id) async{
-    try{
-      final response = await http.post(Uri.parse(ApiConfig.url + "updatemahasiswa.php"), body: {
-        'id_mahasiswa': id,
-        'nama': isNamaCont.text,
-        'nohp': isNoHpCont.text,
-        'alamat': isAlamatCont.text,
-        'pendidikan': selectedValue,
-      });
-
-      print(response.body);
-
-      var updateMahasiswa = await json.decode(json.encode(response.body));
-
-      if(updateMahasiswa != null){
-        Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            backgroundColor: Colors.green,
-            content: Text("Update Data Mahasiswa Successfully!", style: TextStyle(color: Colors.white),)));
-      }else{
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            backgroundColor: Colors.red,
-            content: Text("Update Data Mahasiswa Failed!", style: TextStyle(color: Colors.white),)));
-      }
-
-      notifyListeners();
-    }catch(e){
-      print(e);
-    }
-  }
 
 }

@@ -1,14 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:flutter5/form/form_provider.dart';
-import 'package:flutter5/home/home_provider.dart';
-import 'package:flutter5/model/modelmahasiswa.dart';
+import 'package:flutter5/model/model_mahasiswa.dart';
 import 'package:provider/provider.dart';
 
 class FormPage extends StatefulWidget {
 
   final bool isUpdate;
-  final ModelMahasiswa? data;
+  final DataMahasiswa? data;
 
   FormPage({Key? key, this.isUpdate = false, this.data}) : super(key: key);
 
@@ -21,9 +20,10 @@ class _FormPageState extends State<FormPage> {
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
         create: (context) => FormProvider(
-            widget.data?.nama ?? '',
-            widget.data?.nohp ?? '',
-            widget.data?.alamat ?? '',
+            widget.data?.idMahasiswa.toString() ?? '',
+            widget.data?.namaMahasiswa ?? '',
+            widget.data?.nohpMahasiswa ?? '',
+            widget.data?.alamatMahasiswa ?? '',
             widget.data?.pendidikan ?? '',
         ),
         child: Consumer<FormProvider>(
@@ -34,7 +34,7 @@ class _FormPageState extends State<FormPage> {
                   backgroundColor: Colors.white,
                   appBar: AppBar(
                     title: Text(
-                        widget?.data != null ? "Update Form" :
+                        widget.data != null ? "Update Form" :
                         "Add Form"
                     ),
                     bottom: TabBar(
@@ -53,8 +53,7 @@ class _FormPageState extends State<FormPage> {
                         // Form Biodata
                         Padding(
                           padding: EdgeInsets.all(20),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                          child: ListView(
                             children: [
                               Text("Nama"),
                               SizedBox(height: 15),
@@ -134,10 +133,10 @@ class _FormPageState extends State<FormPage> {
                                         ),
                                       ))
                                           .toList(),
-                                      value: widget?.data != null ? formProvider.selectedValue : formProvider.selectedData,
+                                      value: widget.data != null ? formProvider.selectedValue : formProvider.selectedData,
                                       onChanged: (value) {
                                         setState(() {
-                                          if(widget?.data != null){
+                                          if(widget.data != null){
                                             formProvider.selectedValue = value;
                                           }else{
                                             formProvider.selectedData = value;
@@ -166,29 +165,28 @@ class _FormPageState extends State<FormPage> {
                             child: ListView(
                               children: [
                                 Container(
-                                  height: 150,
                                   child: ListView.builder(
-                                      itemCount: formProvider.listPekerjaan?.length,
+                                    shrinkWrap: true,
+                                      physics: NeverScrollableScrollPhysics(),
+                                      itemCount: formProvider.listPekerjaan.length ?? 0,
                                       itemBuilder: (context, index) {
                                         return Card(
                                           child: ListTile(
                                             title: Row(
                                               children: [
-                                                Text(formProvider.listPekerjaan?[index].namaPekerjaan ?? ''),
+                                                Text(formProvider.listPekerjaan[index]["nama_pekerjaan"] ?? ''),
                                                 SizedBox(width: 10),
                                                 Text(
-                                                  "${formProvider.listPekerjaan?[index].lama ?? ''} Tahun",
+                                                  "${formProvider.listPekerjaan[index]["lama"] ?? ''} Tahun",
                                                   style: TextStyle(color: Colors.grey),
                                                 )
                                               ],
                                             ),
                                             trailing: IconButton(
                                               onPressed: () {
-                                                formProvider.deleteDataPekerjaan(
-                                                  context,
-                                                  formProvider.listPekerjaan?[index].idPekerjaan.toString() ?? ''
-                                                );
-                                                formProvider.listDataPekerjaan();
+                                                setState(() {
+                                                  formProvider.listPekerjaan.removeAt(index);
+                                                });
                                               },
                                               icon: Icon(Icons.close),
                                             ),
@@ -264,16 +262,11 @@ class _FormPageState extends State<FormPage> {
                                         MaterialButton(
                                           onPressed: () {
                                             formProvider.addDataPekerjaan(context);
-                                            if(mounted){
-                                              setState(() {
-                                                formProvider.listDataPekerjaan();
-                                              });
-                                            }
                                           },
                                           color: Colors.blue,
                                           height: 50,
                                           minWidth: double.infinity,
-                                          child: Text(widget?.data != null ? "Update" :
+                                          child: Text(widget.data != null ? "Update" :
                                             "Tambah",
                                             style: TextStyle(color: Colors.white),
                                           ),
@@ -289,9 +282,9 @@ class _FormPageState extends State<FormPage> {
                             padding: const EdgeInsets.all(20),
                             child: MaterialButton(
                               onPressed: () async {
-                                widget?.data != null
-                                    ? formProvider.updateDataMahasiswa(context, widget.data?.idMahasiswa.toString() ?? '')
-                                    : await formProvider.addDataMahasiswa(context);
+                                widget.data != null
+                                    ? formProvider.updateMahasiswa(context)
+                                    : await formProvider.addMahasiswa(context);
                               },
                               color: Colors.blue,
                               height: 65,
