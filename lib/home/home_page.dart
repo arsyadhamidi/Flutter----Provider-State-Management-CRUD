@@ -76,14 +76,13 @@ class _HomePageState extends State<HomePage> {
                                         ],
                                       ),
                                       trailing: IconButton(
-                                          onPressed: () {
-                                             homeProvider.deleteDataMahasiswa(
+                                          onPressed: () async {
+                                            await homeProvider.deleteMahasiswa(
                                                 context,
                                                 homeProvider.listMahasiswa?[index]
                                                     .idMahasiswa
                                                     .toString() ??
                                                     '');
-                                             homeProvider.listDataMahasiswa();
                                           },
                                           icon: Icon(Icons.delete)),
                                     ),

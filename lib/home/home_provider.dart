@@ -34,13 +34,17 @@ class HomeProvider extends ChangeNotifier {
       print(e);
     }
   }
+  Future<void> deleteMahasiswa(BuildContext context, String idMahasiswa) async{
+    final response = await http.post(Uri.parse(ApiConfig.url + "delete-mahasiswa"), body: {
+      'id_mahasiswa': idMahasiswa,
+    });
 
-  Future<void> deleteDataMahasiswa(
-      BuildContext context, String idMahasiswa) async {
-    final response = await http.post(
-        Uri.parse(ApiConfig.url + "delete-mahasiswa"),
-        body: {"id_mahasiswa": idMahasiswa});
-    await jsonDecode(response.body);
-    notifyListeners();
+    var deletemahasiswa = await jsonDecode(response.body);
+    if(deletemahasiswa["status"] == 200){
+      listDataMahasiswa();
+      notifyListeners();
+    }else{
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Hapus Gagal")));
+    }
   }
 }
